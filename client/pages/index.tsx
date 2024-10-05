@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef} from 'react';
 import styles from '../styles/Home.module.css';
 import RoyaltiesABI from '../abi/RoyaltiesDistribution.json';
 import RoyaltiesBytecode from '../bytecode/Royalties.json';
@@ -17,7 +17,9 @@ export default function Home() {
   const [isContractDeployed, setIsContractDeployed] = useState<boolean>(false);
   const [isDeploying, setIsDeploying] = useState<boolean>(false);
   const [contractAddress, setContractAddress] = useState<string | null>('');
-
+  const dashboardRef = useRef<HTMLDivElement>(null);
+  const aboutUsRef = useRef<HTMLDivElement>(null);
+  const [activeSection, setActiveSection] = useState('home');
   useEffect(() => {
     const initTronWeb = async () => {
       if (window.tronWeb && window.tronWeb.ready) {
@@ -30,6 +32,21 @@ export default function Home() {
     };
 
     initTronWeb();
+    const handleScroll = () => {
+      const dashboardTop = dashboardRef.current?.offsetTop || 0;
+      const aboutUsTop = aboutUsRef.current?.offsetTop || 0;
+      const scrollPosition = window.scrollY + 200; // Adjust based on your navbar height
+
+      if (scrollPosition >= aboutUsTop) {
+        setActiveSection('about-us');
+      } else if (scrollPosition >= dashboardTop) {
+        setActiveSection('dashboard');
+      } else {
+        setActiveSection('home');
+      }
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   const connectWallet = async () => {
@@ -84,6 +101,11 @@ export default function Home() {
       alert('Failed to deploy contract. Please check the console for details.');
     } finally {
       setIsDeploying(false);
+    }
+  };
+  const scrollToSection = (ref: React.RefObject<HTMLDivElement>) => {
+    if (ref.current) {
+      ref.current.scrollIntoView({ behavior: 'smooth' });
     }
   };
 
@@ -194,16 +216,66 @@ export default function Home() {
 
   return (
     <div className={styles.container}>
+      {/* Header with navigation and logo */}
       <header className={styles.header}>
+        <div className={styles.logoNav}>
+          <img src="/stakelogo.png" alt="Stakecess Logo" className={styles.logo} />
+        </div>
+
+        {/* Navigation Links */}
+        <nav className={styles.nav}>
+          <a
+            href="#"
+            className={`${styles.navLink} ${activeSection === 'home' ? styles.activeLink : ''}`}
+            onClick={() => scrollToSection({ current: null })}>
+            Home
+          </a>
+          <a
+            href="#"
+            className={`${styles.navLink} ${activeSection === 'dashboard' ? styles.activeLink : ''}`}
+            onClick={() => scrollToSection(dashboardRef)}>
+            Dashboard
+          </a>
+          <a
+            href="#"
+            className={`${styles.navLink} ${activeSection === 'about-us' ? styles.activeLink : ''}`}
+            onClick={() => scrollToSection(aboutUsRef)}>
+            About Us
+          </a>
+        </nav>
+
+        {/* Connect Wallet Button */}
         <div className={styles.connectButtonWrapper}>
           <button className={styles.connectButton} onClick={connectWallet}>
             {account ? `Connected: ${account.slice(0, 6)}...${account.slice(-4)}` : 'Connect Wallet'}
           </button>
         </div>
-        <h1 className={styles.title}>Royalties Distribution Demo</h1>
-        <div></div>
       </header>
+
+      {/* Main Hero Section */}
       <main className={styles.main}>
+        <h1 className={styles.heroTitle}>Stakecess - Learn2Earn</h1>
+        <p className={styles.heroSubtitle}>
+          Bet on Progress, $take your Success
+        </p>
+        {!isContractDeployed ? (
+          <div className={styles.deployButtonWrapper}>
+            <button
+              className={styles.deployButton}
+              onClick={() => {
+                deployContract();
+                scrollToSection(dashboardRef); // Scroll to dashboard after creating a study group
+              }}
+              disabled={isDeploying || !account}>
+              {isDeploying ? 'Deploying...' : 'Create Study Group'}
+            </button>
+          </div>
+        ) : null}
+      </main>
+
+      {/* Dashboard Section */}
+      <div ref={dashboardRef} className={styles.dashboard}>
+        <h2 className={styles.sectionTitle}>Dashboard</h2>
         {isContractDeployed ? (
           <div className={styles.buttonGrid}>
             <button className={styles.button} onClick={addPayee}>Add Payee</button>
@@ -211,18 +283,17 @@ export default function Home() {
             <button className={styles.button} onClick={updateTokenContract}>Update Token Contract</button>
             <button className={styles.button} onClick={distributeRoyalties}>Distribute Royalties</button>
           </div>
-        ) : (
-          <div className={styles.deployButtonWrapper}>
-            <button
-              className={styles.deployButton}
-              onClick={deployContract}
-              disabled={isDeploying || !account}
-            >
-              {isDeploying ? 'Deploying...' : 'Deploy Contract'}
-            </button>
-          </div>
-        )}
-      </main>
+        ) : null}
+      </div>
+
+      {/* About Us Section */}
+      <div ref={aboutUsRef} className={styles.aboutUs}>
+        <h2 className={styles.sectionTitle}>About Us</h2>
+        <p>
+          Stakecess is a platform that allows students to stake crypto while working to improve their grades.
+          The more they study, the better their grades, the more they earn.
+        </p>
+      </div>
     </div>
   );
 }

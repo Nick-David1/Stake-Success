@@ -1,11 +1,4 @@
 // SPDX-License-Identifier: MIT
-/*
-1) Add shareholder addresses
-2) Remove shareholders addresses
-3) Modify shares weight for each shareholder
-4) Distribute USDT depending on each shareholder shares
-5) Modify TRC20 token contract address
-*/
 pragma solidity ^0.8.20;
 
 interface ITRC20 {
@@ -15,103 +8,149 @@ interface ITRC20 {
     ) external returns (bool);
 
     function balanceOf(address account) external view returns (uint256);
+
+    function transferFrom(
+        address sender,
+        address recipient,
+        uint256 amount
+    ) external returns (bool);
 }
 
 contract RoyaltiesDistribution {
     struct Payee {
-        //Shareholder
         address account;
-        uint256 share;
+        uint256 score;          // User's test score
+        uint256 stakeAmount;    // Amount bet by the user (usually 100 USDT)
+        uint256 lastPayoutClaimed; // Timestamp of the last payout claimed
     }
 
     address public owner;
     ITRC20 public usdtToken;
     Payee[] public payees;
-    uint256 public totalShares;
+    uint256 public totalBetAmount;  // Total USDT in the betting pool
+    uint256 public totalScores;     // Sum of all users' test scores
 
-    event PayeeAdded(address account, uint256 share);
-    event PayeeRemoved(address account);
-    event RoyaltiesDistributed(uint256 amount);
-    event DistributionFailed(address account, uint256 amount);
-    event TokenContractUpdated(address newTokenContract);
+    event PayeeAdded(address account, uint256 score);
+    event PayoutClaimed(address user, uint256 amount);
+    event Stake(address user, uint256 amount);
+    event BettingClosed();
+
+    bool public bettingPhaseActive = true;
 
     modifier onlyOwner() {
         require(msg.sender == owner, "Only owner may call function");
         _;
     }
 
+    modifier onlyDuringBetting() {
+        require(bettingPhaseActive, "Betting phase is closed");
+        _;
+    }
+
     constructor(address _usdtToken) {
         owner = msg.sender;
         usdtToken = ITRC20(_usdtToken);
-        totalShares = 0;
+        totalBetAmount = 0;
+        totalScores = 0;
     }
 
     /**
-     * @notice Adds a new payee with a specified share
-     * @param account Address of new payee
-     * @param share Number of shares
+     * @notice Each user bets a fixed amount (100 USDT) to join.
      */
-    function addPayee(address account, uint256 share) external onlyOwner {
-        require(account != address(0), "Account is the zero address"); //This helps to protect users from adding the 0 address (burn address)
-        require(share > 0, "Share must be greater than zero");
-        payees.push(Payee(account, share));
-        totalShares = totalShares + share;
-        emit PayeeAdded(account, share);
-    }
-
-    /**
-     * @notice Removes an existing payee
-     * @param account Address of payee to remove
-     */
-    function removePayee(address account) external onlyOwner {
-        require(account != address(0), "Account is the zero address");
-
-        for (uint256 i = 0; i < payees.length; i++) {
-            if (payees[i].account == account) {
-                totalShares = totalShares - payees[i].share; //Deduct the to be removed account shares from the total shares
-
-                // Swap with the last element and pop
-                payees[i] = payees[payees.length - 1];
-                payees.pop();
-
-                emit PayeeRemoved(account);
-                break;
-            }
-        }
-    }
-
-    /**
-     * @notice Updates the token contract address for distribution
-     * @param newTokenContract Address of new token for this contract to distribute
-     */
-    function updateTokenContract(address newTokenContract) external onlyOwner {
+    function bet(uint256 score) external onlyDuringBetting {
+        uint256 bettingAmount = 100 * 1e6; // Assuming USDT has 6 decimals
         require(
-            newTokenContract != address(0),
-            "New token contract is the zero address"
+            usdtToken.transferFrom(msg.sender, address(this), bettingAmount),
+            "Bet transfer failed"
         );
-        usdtToken = ITRC20(newTokenContract);
-        emit TokenContractUpdated(newTokenContract);
+
+        // Add the user and their score to the payees array
+        payees.push(Payee(msg.sender, score, bettingAmount, 0));
+
+        // Increase total betting pool and total scores
+        totalBetAmount += bettingAmount;
+        totalScores += score;
+
+        emit Stake(msg.sender, bettingAmount);
     }
 
     /**
-     * @notice Distributes royalties to all payees based on their shares
+     * @notice Ends the betting phase, disallowing further bets.
      */
-    function distributeRoyalties() external onlyOwner {
-        require(totalShares > 0, "No shares defined");
-        uint256 totalAmount = usdtToken.balanceOf(address(this));
-        require(totalAmount > 0, "No USDT to distribute");
+    function closeBettingPhase() external onlyOwner onlyDuringBetting {
+        bettingPhaseActive = false;
+        emit BettingClosed();
+    }
+
+    /**
+     * @notice Calculate each user's payout based on the formula:
+     * (totalBetAmount / totalScores) * (userScore / 100) * bettingAmount
+     * This can be claimed after the exam.
+     */
+    function claimPayout() external {
+        require(!bettingPhaseActive, "Betting phase must be closed before claiming payout");
 
         for (uint256 i = 0; i < payees.length; i++) {
-            Payee memory payee = payees[i];
-            uint256 payment = (totalAmount * payee.share) / totalShares;
-            bool success = usdtToken.transfer(payee.account, payment);
+            if (payees[i].account == msg.sender) {
+                require(payees[i].lastPayoutClaimed == 0, "Payout already claimed");
 
-            if (!success) {
-                emit DistributionFailed(payee.account, payment);
-                revert("USDT transfer failed");
+                uint256 userScore = payees[i].score;
+                uint256 userStake = payees[i].stakeAmount;
+
+                // Formula to calculate payout
+                uint256 payout = (totalBetAmount * userScore / totalScores) * userStake / (100 * 1e6); // 100 is a percentage base
+                require(payout > 0, "No payout available");
+
+                // Mark the payout as claimed
+                payees[i].lastPayoutClaimed = block.timestamp;
+
+                // Transfer the payout
+                usdtToken.transfer(msg.sender, payout);
+                emit PayoutClaimed(msg.sender, payout);
+                return;
             }
         }
 
-        emit RoyaltiesDistributed(totalAmount);
+        revert("User not found or payout already claimed");
+    }
+
+    /**
+     * @notice Returns the total USDT in the betting pool.
+     */
+    function getPoolSize() external view returns (uint256) {
+        return usdtToken.balanceOf(address(this));
+    }
+
+    /**
+     * @notice Returns the total of all users' test scores.
+     */
+    function getTotalScores() external view returns (uint256) {
+        return totalScores;
+    }
+
+    /**
+     * @notice Returns the stake of a specific user.
+     * @param user Address of the user
+     */
+    function getUserStake(address user) external view returns (uint256) {
+        for (uint256 i = 0; i < payees.length; i++) {
+            if (payees[i].account == user) {
+                return payees[i].stakeAmount;
+            }
+        }
+        return 0; // If no stake found for the user
+    }
+
+    /**
+     * @notice Returns the score of a specific user.
+     * @param user Address of the user
+     */
+    function getUserScore(address user) external view returns (uint256) {
+        for (uint256 i = 0; i < payees.length; i++) {
+            if (payees[i].account == user) {
+                return payees[i].score;
+            }
+        }
+        return 0; // If no score found for the user
     }
 }
