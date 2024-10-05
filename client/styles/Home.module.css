@@ -3,10 +3,7 @@
   padding: 0 1rem;
   background-color: #000000;
   color: #ffffff;
-  background-image: url('/gradient.png'); /* Add the gradient image */
-  background-size: cover; /* Make sure the image covers the entire background */
-  background-position: center; /* Center the image */
-  background-repeat: no-repeat; /* Prevent the image from repeating */
+
 }
 
 /* Header styling */
@@ -50,7 +47,27 @@
 .navLink:hover {
   color: #ff6b6b;
 }
-
+.main {
+  padding: 2rem;
+  text-align: center;
+  min-height: 100vh;  /* Takes full viewport height */
+  background-image: url('/gradient.png'); /* Background for home */
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: scroll;  /* No background scrolling */
+  color: white;
+  background-image: url('/gradient.png'); /* Add the gradient image */
+  background-size: cover; /* Make sure the image covers the entire background */
+  background-position: center; /* Center the image */
+  background-repeat: no-repeat; /* Prevent the image from repeating */
+}
+.dashboard, .aboutUs {
+  padding: 10rem 1rem;
+  background-size: cover;
+  background-color: black; /* Solid background for sections */
+  color: white;
+}
 .connectButtonWrapper {
   justify-self: end;
 }
@@ -176,7 +193,51 @@
   z-index: 1;
   transition: background-color 0.3s ease, color 0.3s ease, border 0.3s ease;
 }
+.dashboard {
+  padding: 10rem 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: black; /* Solid background for the dashboard */
+  color: white;
+  text-align: center;
+}
+.sectionTitle {
+  padding: 10rem 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: black; /* Solid background for the dashboard */
+  color: white;
+  text-align: center;
+}
+.buttonGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+  max-width: 600px;
+  width: 100%;
+}
 
+/* Style the dashboard buttons to match the Create Study Group button */
+.button {
+  background-color: transparent;
+  color: white;
+  padding: 1rem 2rem;
+  font-size: 1.2rem;
+  border-radius: 8px;
+  border: 2px solid white;
+  cursor: pointer;
+  transition: background-color 0.3s, border 0.3s ease, transform 0.1s;
+}
+.sectionTitle {
+  font-size: 3rem; /* Increase the font size */
+  font-weight: bold;
+  margin-bottom: 2rem;
+  color: white;
+}
 /* Hover effect */
 .deployButton:hover {
   background-color: rgba(255, 255, 255, 0.1); /* Slight white overlay on hover */

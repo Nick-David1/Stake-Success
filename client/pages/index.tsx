@@ -264,7 +264,7 @@ export default function Home() {
               className={styles.deployButton}
               onClick={() => {
                 deployContract();
-                scrollToSection(dashboardRef); // Scroll to dashboard after creating a study group
+                scrollToSection(dashboardRef);
               }}
               disabled={isDeploying || !account}>
               {isDeploying ? 'Deploying...' : 'Create Study Group'}
@@ -278,10 +278,10 @@ export default function Home() {
         <h2 className={styles.sectionTitle}>Dashboard</h2>
         {isContractDeployed ? (
           <div className={styles.buttonGrid}>
-            <button className={styles.button} onClick={addPayee}>Add Payee</button>
-            <button className={styles.button} onClick={removePayee}>Remove Payee</button>
+            <button className={styles.button} onClick={addPayee}>Add Staker</button>
+            <button className={styles.button} onClick={removePayee}>Remove Staker</button>
             <button className={styles.button} onClick={updateTokenContract}>Update Token Contract</button>
-            <button className={styles.button} onClick={distributeRoyalties}>Distribute Royalties</button>
+            <button className={styles.button} onClick={distributeRoyalties}>Payout Stakers</button>
           </div>
         ) : null}
       </div>
@@ -290,8 +290,7 @@ export default function Home() {
       <div ref={aboutUsRef} className={styles.aboutUs}>
         <h2 className={styles.sectionTitle}>About Us</h2>
         <p>
-          Stakecess is a platform that allows students to stake crypto while working to improve their grades.
-          The more they study, the better their grades, the more they earn.
+        At Stakecess, we understand the two major struggles college students face: achieving top grades and earning money. Founded in 2024, Stakecess addresses both challenges with a Learn2Earn model that lets students earn crypto while they study. By joining study groups, contributing crypto to a shared pool, and earning rewards based on academic performance, students can turn their hard work into real-world value. The better you score, the more you earn. Stake your success with Stakecess – where studying pays off, literally!
         </p>
       </div>
     </div>
