@@ -1,0 +1,106 @@
+.container {
+  min-height: 100vh;
+  padding: 0 1rem;
+  background-color: #1a1a1a;
+  color: #ffffff;
+}
+
+.header {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  padding: 1rem 0;
+}
+
+.connectButtonWrapper {
+  justify-self: start;
+}
+
+.connectButton {
+  background-color: #333333;
+  color: #ffffff;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+
+.connectButton:hover {
+  background-color: #4d4d4d;
+}
+
+.title {
+  font-size: 2.5rem;
+  text-align: center;
+  margin: 0;
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem 0;
+}
+
+.buttonGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  max-width: 600px;
+  width: 100%;
+}
+
+.button {
+  background-color: #333333;
+  color: #ffffff;
+  border: none;
+  padding: 1rem;
+  border-radius: 4px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.1s;
+}
+
+.button:hover {
+  background-color: #4d4d4d;
+}
+
+.button:active {
+  transform: scale(0.98);
+}
+
+@media (max-width: 600px) {
+  .buttonGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.deployButtonWrapper {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.deployButton {
+  background-color: red;
+  color: white;
+  border: none;
+  padding: 1rem 2rem;
+  font-size: 1.2rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.1s;
+}
+
+.deployButton:hover {
+  background-color: #45a049;
+}
+
+.deployButton:active {
+  transform: scale(0.98);
+}
